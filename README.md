@@ -1,0 +1,1 @@
+as seen on goofybot, but now as a standalone module
