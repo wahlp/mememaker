@@ -1,6 +1,8 @@
 import io
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
+
 
 def read(*paths, **kwargs):
     content = ""
@@ -19,9 +21,10 @@ def read_requirements(path):
         if not line.startswith(('"', "#", "-", "git+"))
     ]
 
+
 setup(
-    name='mememaker',
-    version='0.1',
+    name="mememaker",
+    version="0.1",
     packages=find_packages(exclude=["tests", ".github"]),
-    install_requires=read_requirements('requirements.txt')
+    install_requires=read_requirements("requirements.txt"),
 )

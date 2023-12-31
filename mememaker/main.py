@@ -6,14 +6,16 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, ImageSequence
 
-# todo: 
+# todo:
 # add unicode text support
 
 logger = logging.getLogger(__name__)
 
+
 class FontOptions(Enum):
     default = ("Futura", "caption.otf")
     comic_sans = ("Comic Sans", "Comic Sans MS Bold.ttf")
+
 
 def calc_line_splitting(text, image_width, font):
     # init starting values for loop
@@ -29,16 +31,17 @@ def calc_line_splitting(text, image_width, font):
         # calc until we find a limit that fits the image width
         lines = textwrap.wrap(text, max_char_per_line)
         pixel_width = max(draw.textbbox((0, 0), line, font=font)[2] for line in lines)
-        max_char_per_line = len(text.rsplit(' ', num_words)[0])
+        max_char_per_line = len(text.rsplit(" ", num_words)[0])
         num_words += 1
 
     return lines
 
+
 def draw_text_as_image(
-    image_width: int, 
-    text: str, 
-    font: ImageFont.FreeTypeFont, 
-    text_color: str, 
+    image_width: int,
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    text_color: str,
 ):
     # https://stackoverflow.com/a/56205095
 
@@ -57,44 +60,49 @@ def draw_text_as_image(
     y_text = padding - max(line_heights) // 16
     for line in lines:
         _, _, line_width, line_height = draw.textbbox((0, 0), line, font=font)
-        draw.text(((image_width - line_width) / 2, y_text), 
-                  line, font=font, fill=text_color)
+        draw.text(
+            ((image_width - line_width) / 2, y_text), line, font=font, fill=text_color
+        )
         y_text += max(line_heights)
 
     if y_text > new_img_height:
-        logger.warning(f'warning: drawn text has exceeded the height of the image. {image_width=}, {lines=}')
+        logger.warning(
+            f"drawn text has exceeded the height of the image. {image_width=}, {lines=}"
+        )
 
     return image
 
-def merge_images(
-    img_above: Image.Image, 
-    img_below: Image.Image,
-    transparency: bool
-):
-    if transparency:
-        mode = 'RGBA'
-    else:
-        mode = 'RGB'
 
-    output_image = Image.new(mode, (img_above.width, img_above.height + img_below.height))
+def merge_images(img_above: Image.Image, img_below: Image.Image, transparency: bool):
+    if transparency:
+        mode = "RGBA"
+    else:
+        mode = "RGB"
+
+    output_image = Image.new(
+        mode, (img_above.width, img_above.height + img_below.height)
+    )
     output_image.paste(img_above, (0, 0))
     output_image.paste(img_below, (0, img_above.height))
 
     return output_image
+
 
 def get_file_path(relative_path: str):
     base_path = Path(__file__).parent
     abs_path = (base_path / relative_path).resolve()
     return str(abs_path)
 
+
 def init_font(input_img_width: int, font: str):
     fontsize = input_img_width // 10
 
-    font_location = get_file_path(f'./fonts/{FontOptions[font].value[1]}')
+    font_location = get_file_path(f"./fonts/{FontOptions[font].value[1]}")
     font = ImageFont.truetype(font_location, fontsize)
     text_color = "black"
 
     return font, text_color
+
 
 def add_text_to_image(image_data: bytes, text: str, font: str, transparency: bool):
     input_file = io.BytesIO(image_data)
@@ -105,12 +113,19 @@ def add_text_to_image(image_data: bytes, text: str, font: str, transparency: boo
     output_image = merge_images(caption_img, input_img, transparency)
 
     buffer = io.BytesIO()
-    img_format = 'PNG' if transparency else 'JPEG'
+    img_format = "PNG" if transparency else "JPEG"
     output_image.save(buffer, format=img_format)
     buffer.seek(0)
     return buffer
 
-def add_text_to_gif(image_data: bytes, text: str, font: str, transparency: bool, custom_speed: float = None):
+
+def add_text_to_gif(
+    image_data: bytes,
+    text: str,
+    font: str,
+    transparency: bool,
+    custom_speed: float = None,
+):
     # sort of broken with transparency
     # the frames sequentially get drawn on top of each other without clearing the old ones
     input_file = io.BytesIO(image_data)
@@ -125,23 +140,23 @@ def add_text_to_gif(image_data: bytes, text: str, font: str, transparency: bool,
         frame_copy = frame.copy()
         output_image = merge_images(caption_img, frame_copy, transparency)
         if custom_speed is not None:
-            custom_durations.append(frame_copy.info['duration'] / custom_speed)
+            custom_durations.append(frame_copy.info["duration"] / custom_speed)
         frames.append(output_image)
-    
+
     if custom_durations:
         output_frames_durations = custom_durations
     else:
-        output_frames_durations = input_gif.info['duration']
-    
+        output_frames_durations = input_gif.info["duration"]
+
     buffer = io.BytesIO()
     frames[0].save(
-        buffer, 
-        format="GIF", 
-        save_all=True, 
-        append_images=frames[1:], 
-        loop=0, 
+        buffer,
+        format="GIF",
+        save_all=True,
+        append_images=frames[1:],
+        loop=0,
         duration=output_frames_durations,
-        optimize=True
+        optimize=True,
     )
     buffer.seek(0)
     return buffer
