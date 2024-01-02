@@ -1,1 +1,1 @@
-as seen on goofybot, but now as a standalone module
+meme generator module for [goofybot](https://github.com/wahlp/goofybot)
