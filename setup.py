@@ -27,4 +27,5 @@ setup(
     version="0.1",
     packages=find_packages(exclude=["tests", ".github"]),
     install_requires=read_requirements("requirements.txt"),
+    include_package_data=True,
 )
