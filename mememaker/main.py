@@ -3,6 +3,7 @@ import logging
 import textwrap
 from enum import Enum
 from pathlib import Path
+from typing import List
 
 from PIL import Image, ImageDraw, ImageFont, ImageSequence
 
@@ -163,7 +164,7 @@ def add_text_to_gif(
     return buffer
 
 
-def calc_final_frame_durations(initial_durations: list[int], custom_speed: float):
+def calc_final_frame_durations(initial_durations: List[int], custom_speed: float):
     # gif frame durations have a lower bound of how short they can be
     # https://stackoverflow.com/questions/64473278/gif-frame-duration-seems-slower-than-expected
     # work around this by dropping alternate frames to look like we actually still sped up
