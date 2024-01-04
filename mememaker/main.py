@@ -134,19 +134,16 @@ def add_text_to_gif(
     font_object, text_color = init_font(input_gif.width, font)
     caption_img = draw_text_as_image(input_gif.width, text, font_object, text_color)
 
+    if custom_speed is None:
+        custom_speed = 1
+
     frames: list[Image.Image] = []
-    custom_durations = []
+    durations = []
     for frame in ImageSequence.Iterator(input_gif):
         frame_copy = frame.copy()
         output_image = merge_images(caption_img, frame_copy, transparency)
-        if custom_speed is not None:
-            custom_durations.append(frame_copy.info["duration"] / custom_speed)
+        durations.append(frame_copy.info["duration"] / custom_speed)
         frames.append(output_image)
-
-    if custom_durations:
-        output_frames_durations = custom_durations
-    else:
-        output_frames_durations = input_gif.info["duration"]
 
     buffer = io.BytesIO()
     frames[0].save(
@@ -155,7 +152,7 @@ def add_text_to_gif(
         save_all=True,
         append_images=frames[1:],
         loop=0,
-        duration=output_frames_durations,
+        duration=durations,
         optimize=True,
     )
     buffer.seek(0)
