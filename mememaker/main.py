@@ -1,5 +1,6 @@
 import io
 import logging
+import math
 import textwrap
 from enum import Enum
 from pathlib import Path
@@ -139,20 +140,36 @@ def add_text_to_gif(
 
     frames: list[Image.Image] = []
     durations = []
+    frame_drop_interval = 1
     for frame in ImageSequence.Iterator(input_gif):
         frame_copy = frame.copy()
         output_image = merge_images(caption_img, frame_copy, transparency)
-        durations.append(frame_copy.info["duration"] / custom_speed)
         frames.append(output_image)
 
+        frame_duration = frame_copy.info["duration"] / custom_speed
+        # gif frame durations have a lower bound of how short they can be
+        # https://stackoverflow.com/questions/64473278/gif-frame-duration-seems-slower-than-expected
+        # work around this by dropping alternate frames to look like we actually still sped up
+        lowest_valid_duration = 20
+        if frame_duration < lowest_valid_duration:
+            unachievable_speedup = math.ceil(lowest_valid_duration / frame_duration)
+            frame_drop_interval = max(frame_drop_interval, unachievable_speedup)
+            print(f"wanted to set {frame_duration=} but got {unachievable_speedup=}")
+            durations.append(lowest_valid_duration)
+        else:
+            durations.append(frame_duration)
+
+    frames_to_keep = frames[::frame_drop_interval]
+    durations_to_keep = durations[::frame_drop_interval]
+
     buffer = io.BytesIO()
-    frames[0].save(
+    frames_to_keep[0].save(
         buffer,
         format="GIF",
         save_all=True,
-        append_images=frames[1:],
+        append_images=frames_to_keep[1:],
         loop=0,
-        duration=durations,
+        duration=durations_to_keep,
         optimize=True,
     )
     buffer.seek(0)
