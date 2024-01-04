@@ -150,6 +150,9 @@ def add_text_to_gif(
     frames_to_keep = frames[::frame_drop_interval]
     durations_to_keep = durations[::frame_drop_interval]
 
+    logging.debug(f"old durations: {durations}")
+    logging.debug(f"new durations: {durations_to_keep}")
+
     buffer = io.BytesIO()
     frames_to_keep[0].save(
         buffer,
