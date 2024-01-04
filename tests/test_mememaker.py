@@ -47,8 +47,15 @@ def test_gif_speed_change(gif_bytes_fixture, requested_speed):
     assert im2.height > im1.height
     assert im2.width == im1.width
 
-    im1_duration = sum(frame.info["duration"] for frame in ImageSequence.Iterator(im1))
-    im2_duration = sum(frame.info["duration"] for frame in ImageSequence.Iterator(im2))
+    def measure_duration(im):
+        duration = 0
+        for frame in ImageSequence.Iterator(im):
+            assert frame.info["duration"] >= 20
+            duration += frame.info["duration"]
+        return duration
+
+    im1_duration = measure_duration(im1)
+    im2_duration = measure_duration(im2)
 
     # frame durations round to multiples of 10 when saving the output gif
     # so the output speed may not be exactly the same value as the requested speed
